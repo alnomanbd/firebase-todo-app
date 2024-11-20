@@ -18,6 +18,7 @@ export default function App() {
     }
   };
 
+  // To set the edit text into input box
   const setEdit = async (index) => {
     setInput(todos[index].todo)
     setEditIndex(index)
