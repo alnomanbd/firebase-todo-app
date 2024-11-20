@@ -1,99 +1,78 @@
 import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { FaPlus } from "react-icons/fa";
+import { FaPencilAlt, FaPlus } from "react-icons/fa";
 import { db } from "./firebase.config";
 import TodoList from "./components/TodoList";
+import { toast } from "react-toastify";
+import Spinner from "./components/Spinner";
 
 export default function App() {
-  // const [todos, setTodos] = useState([{id: 1, todo: "Learn React"}]);
   const [todos, setTodos] = useState([]);
   const [input, setInput] = useState("");
-  const [editIndex, setEditIndex] = useState(-1)
+  const [editIndex, setEditIndex] = useState(-1);
+  const [loading, setLoading] = useState(false);
 
-
-  // Load the todo list from database
+  // Load the todo list from the database
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'todos'), (snapshot) => {
-      setTodos(snapshot.docs.map((doc) => ({id: doc.id, todo: doc.data().todo})))
-    })
-    return () => unsubscribe()
-  },[])
-
-
-  // Add Todo Manual
-  // const addTodo = async () => {
-  //   try {
-  //     if (input.trim() != "") {
-  //       setTodos([...todos, { id: new Date(), todo: input }]);
-  //       setInput("");
-  //     }
-  //   } catch (error) {
-  //     console.error(error.message);
-  //   }
-  // };
+      setTodos(snapshot.docs.map((doc) => ({ id: doc.id, todo: doc.data().todo })));
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Add Todo in Firebase
   const addTodo = async () => {
-      try {
-        if (input.trim() != "") {
-          await addDoc(collection(db, 'todos'), { todo: input })
-          setInput("");
-        }
-      } catch (error) {
-        console.error(error.message);
-      }
-    };
+    if (input.trim() === "") return;  // Prevent empty tasks
+    setLoading(true);  // Show the spinner
+    try {
+      await addDoc(collection(db, 'todos'), { todo: input });
+      toast.success("Task added successfully!");
+      setInput("");  // Reset input field
+    } catch (error) {
+      console.error(error.message);
+      toast.error("Failed to add task!");
+    } finally {
+      setLoading(false);  // Hide the spinner
+    }
+  };
 
-  // To set the edit text into input box
-  const setEdit = async (index) => {
-    setInput(todos[index].todo)
-    setEditIndex(index)
-  }
+  // Set the edit text into the input box
+  const setEdit = (index) => {
+    setInput(todos[index].todo);
+    setEditIndex(index);
+  };
 
-  // Update the todo manual
-  // const updateTodo = async () => {
-  //   try {
-  //     if (input.trim() != '') {
-  //       const updatedTodos = [...todos]
-  //       updatedTodos[editIndex].todo = input
-  //       setTodos(updatedTodos)
-  //       setEditIndex(-1)
-  //       setInput('')
-  //     }
-  //   } catch (error) {
-  //     console.error(error.message)
-  //   }
-  // }
-
-  // Update todo into firebase
+  // Update Todo in Firebase
   const updateTodo = async () => {
+    if (input.trim() === "") return;  // Prevent empty tasks
+    setLoading(true);  // Show the spinner
     try {
-      if (input.trim() != '') {
-        const todoDocRef = doc(db, 'todos', todos[editIndex].id)
-        await updateDoc(todoDocRef, {todo: input})
-        setEditIndex(-1)
-        setInput('')
-      }
+      const todoDocRef = doc(db, 'todos', todos[editIndex].id);
+      await updateDoc(todoDocRef, { todo: input });
+      toast.success("Task updated successfully!");
+      setEditIndex(-1);
+      setInput("");  // Reset input field
     } catch (error) {
-      console.error(error.message)
+      console.error(error.message);
+      toast.error("Failed to update task!");
+    } finally {
+      setLoading(false);  // Hide the spinner
     }
-  }
+  };
 
-  // // Delete todo from the todo list manual
-  // const removeTodo = async (id) => {
-  //   let filteredTodos = todos.filter((todo) => todo.id !== id)
-  //   setTodos(filteredTodos)
-  //   setInput('')
-  // }
-
-  // Delete todo  from firebase
+  // Delete Todo from Firebase
   const removeTodo = async (id) => {
+    setLoading(true);  // Show the spinner
     try {
-      await deleteDoc(doc(db, 'todos', id))
+      await deleteDoc(doc(db, 'todos', id));
+      toast.success("Task deleted successfully!");
     } catch (error) {
-      console.error(error.message)
+      console.error(error.message);
+      toast.error("Failed to delete task!");
+    } finally {
+      setLoading(false);  // Hide the spinner
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex flex-col gap-4 items-center justify-center p-4 bg-custom-background bg-center bg-cover">
@@ -112,15 +91,18 @@ export default function App() {
             onClick={editIndex === -1 ? addTodo : updateTodo}
             className="bg-gradient-to-r from-blue-400 to-blue-600 text-white py-2 px-4 rounded"
           >
-            {editIndex === -1 ? <FaPlus/> : <FaPencilAlt/>}
+            {editIndex === -1 ? <FaPlus /> : <FaPencilAlt />}
           </button>
         </div>
       </div>
 
       {/* List Task */}
       {todos.length > 0 && (
-        <TodoList todos={ todos } setEdit={setEdit} removeTodo={removeTodo} />
+        <TodoList todos={todos} setEdit={setEdit} removeTodo={removeTodo} />
       )}
+
+      {/* Loading Spinner */}
+      {loading && <Spinner />}
     </div>
   );
 }
