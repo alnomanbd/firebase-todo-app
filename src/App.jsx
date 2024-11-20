@@ -1,7 +1,8 @@
 import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { FaPencilAlt, FaPlus, FaTrash } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
 import { db } from "./firebase.config";
+import TodoList from "./components/TodoList";
 
 export default function App() {
   // const [todos, setTodos] = useState([{id: 1, todo: "Learn React"}]);
@@ -118,26 +119,7 @@ export default function App() {
 
       {/* List Task */}
       {todos.length > 0 && (
-        <div className="bg-gray-100 p-6 rounded shadow-md w-full max-w-lg lg:w-1/4">
-          <ul>
-            {todos.map((todo, index) => (
-              <li
-                key={todo.id}
-                className="flex items-center justify-between bg-white p-3 rounded shadow-mg mb-3"
-              >
-                <span className="text-lg">{todo.todo}</span>
-                <div>
-                  <button onClick={() => setEdit(index)} className="mr-2 p-2 bg-gradient-to-r from-gray-400 to-gray-600 text-white rounded hover:from-gray-500 hover:to-gray-700">
-                    <FaPencilAlt />
-                  </button>
-                  <button onClick={() => removeTodo(todo.id)} className="mr-2 p-2 bg-gradient-to-r from-red-400 to-red-600 text-white rounded hover:from-red-500 hover:to-red-700">
-                    <FaTrash />
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <TodoList todos={ todos } setEdit={setEdit} removeTodo={removeTodo} />
       )}
     </div>
   );
