@@ -1,22 +1,47 @@
-import { useState } from "react";
+import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { useEffect, useState } from "react";
 import { FaPencilAlt, FaPlus, FaTrash } from "react-icons/fa";
+import { db } from "./firebase.config";
 
 export default function App() {
-  const [todos, setTodos] = useState([{id: 1, todo: "Learn React"}]);
+  // const [todos, setTodos] = useState([{id: 1, todo: "Learn React"}]);
+  const [todos, setTodos] = useState([]);
   const [input, setInput] = useState("");
   const [editIndex, setEditIndex] = useState(-1)
 
-  // Add Todo
+
+  // Load the todo list from database
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'todos'), (snapshot) => {
+      setTodos(snapshot.docs.map((doc) => ({id: doc.id, todo: doc.data().todo})))
+    })
+    return () => unsubscribe()
+  },[])
+
+
+  // Add Todo Manual
+  // const addTodo = async () => {
+  //   try {
+  //     if (input.trim() != "") {
+  //       setTodos([...todos, { id: new Date(), todo: input }]);
+  //       setInput("");
+  //     }
+  //   } catch (error) {
+  //     console.error(error.message);
+  //   }
+  // };
+
+  // Add Todo in Firebase
   const addTodo = async () => {
-    try {
-      if (input.trim() != "") {
-        setTodos([...todos, { id: new Date(), todo: input }]);
-        setInput("");
+      try {
+        if (input.trim() != "") {
+          await addDoc(collection(db, 'todos'), { todo: input })
+          setInput("");
+        }
+      } catch (error) {
+        console.error(error.message);
       }
-    } catch (error) {
-      console.error(error.message);
-    }
-  };
+    };
 
   // To set the edit text into input box
   const setEdit = async (index) => {
@@ -24,13 +49,27 @@ export default function App() {
     setEditIndex(index)
   }
 
-  // Update the todo
+  // Update the todo manual
+  // const updateTodo = async () => {
+  //   try {
+  //     if (input.trim() != '') {
+  //       const updatedTodos = [...todos]
+  //       updatedTodos[editIndex].todo = input
+  //       setTodos(updatedTodos)
+  //       setEditIndex(-1)
+  //       setInput('')
+  //     }
+  //   } catch (error) {
+  //     console.error(error.message)
+  //   }
+  // }
+
+  // Update todo into firebase
   const updateTodo = async () => {
     try {
       if (input.trim() != '') {
-        const updatedTodos = [...todos]
-        updatedTodos[editIndex].todo = input
-        setTodos(updatedTodos)
+        const todoDocRef = doc(db, 'todos', todos[editIndex].id)
+        await updateDoc(todoDocRef, {todo: input})
         setEditIndex(-1)
         setInput('')
       }
@@ -39,11 +78,20 @@ export default function App() {
     }
   }
 
-  // Delete todo from the todo list
+  // // Delete todo from the todo list manual
+  // const removeTodo = async (id) => {
+  //   let filteredTodos = todos.filter((todo) => todo.id !== id)
+  //   setTodos(filteredTodos)
+  //   setInput('')
+  // }
+
+  // Delete todo  from firebase
   const removeTodo = async (id) => {
-    let filteredTodos = todos.filter((todo) => todo.id !== id)
-    setTodos(filteredTodos)
-    setInput('')
+    try {
+      await deleteDoc(doc(db, 'todos', id))
+    } catch (error) {
+      console.error(error.message)
+    }
   }
 
   return (
